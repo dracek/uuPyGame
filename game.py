@@ -1,4 +1,7 @@
+import queue
 import threading
+import asyncio
+import time
 from datetime import datetime
 
 import uuid
@@ -9,7 +12,7 @@ from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
 
-from config import GAME_FPS, CLIENT_REFRESH_COEF
+from config import GAME_FPS, CLIENT_REFRESH_COEF, INFO_TIMER
 
 
 class AbstractGame:
@@ -141,12 +144,15 @@ class MultiGameHost(AbstractGame):
         self.npcs.append(NPC(400, 400))
 
         self.client_thread = None
+        self.info_thread = None
+        self.socket_thread = None
+        self.socket_queue = queue.Queue()
+
         self.sio = socketio.Client()
         self.sio.on('message', self.message)
         self.sio.on('info', self.info)
 
         self.sio.on('move', self.move)
-
 
     def run(self):
         """Running loop"""
@@ -155,7 +161,11 @@ class MultiGameHost(AbstractGame):
         self.client_thread = threading.Thread(target=self.start_client, daemon=True)
         self.client_thread.start()
 
-        cnt = 0 # todo implement better info heartbeat
+        self.info_thread = threading.Thread(target=self.start_info, daemon=True)
+        self.info_thread.start()
+
+        self.socket_thread = threading.Thread(target=self.start_socket, daemon=True)
+        self.socket_thread.start()
 
         while self.running:
 
@@ -172,17 +182,11 @@ class MultiGameHost(AbstractGame):
                 self.render_all()
                 pygame.display.flip()
 
-                cnt += 1
-                if cnt > 200:
-                    print("heartbeat!")
-                    now = datetime.now()
-                    print(now.strftime("%H:%M:%S.%f")[:-3])
-                    self.sio.emit("info")
-                    cnt = 0
-
             self.clock.tick(self.tick)
 
         print("Closing game!")
+        self.info_thread.join()
+        self.socket_thread.join()
         self.sio.disconnect()
         self.client_thread.join()
 
@@ -196,14 +200,37 @@ class MultiGameHost(AbstractGame):
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
 
+
+    def start_socket(self):
+        """ Vlákno pro komunikaci přes socket, které bude odebírat data z fronty """
+        while self.running:
+            try:
+                while not self.socket_queue.empty():  # Zpracuj všechny dostupné zprávy
+                    name, data = self.socket_queue.get_nowait()
+                    # print("emitted", name )
+                    self.sio.emit(name, data)
+
+            except queue.Empty:
+                pass  # Pokud fronta je prázdná, čekáme
+
+            time.sleep(0.01)
+
+    def start_info(self):
+        while True:
+            time.sleep(INFO_TIMER)  # Pauza 1 sekunda
+            if self.sio.connected:
+                print("heartbeat!")
+                now = datetime.now()
+                print(now.strftime("%H:%M:%S.%f")[:-3])
+                self.sio.emit("info")
+
     def start_client(self):
         # todo nejak posílat player color
         # todo config ?
 
         headers = {"role": "host", "uid": self.PLAYER1, "name": self.PLAYER1_NAME }
-        self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
-        # self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
-
+        #self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
+        self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
         self.sio.wait()
 
     def send_all_positions(self):
@@ -211,7 +238,8 @@ class MultiGameHost(AbstractGame):
 
         npc_data = [] # todo :)
 
-        self.sio.emit("game_state", {"players": player_data, "npcs": npc_data})
+        self.socket_queue.put(("game_state", {"players": player_data, "npcs": npc_data}))
+        # self.sio.emit("game_state", {"players": player_data, "npcs": npc_data})
 
 
     def message(self, msg):
@@ -233,8 +261,8 @@ class MultiGameHost(AbstractGame):
                 self.players[uid] = new_player
 
     def move(self, data):
-        print(data, "Got move!", data)
-        self.input_manager.add_inputs(data.uid, data.inputs)
+        # print(data, "Got move!", data)
+        self.input_manager.add_inputs(data["uid"], data["inputs"])
 
 
 class MultiGameClient(AbstractGame):
