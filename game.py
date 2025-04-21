@@ -426,4 +426,5 @@ class MultiGameClient(AbstractGame):
         # self.update_npcs()
 
         self.render_all()
+
         pygame.display.flip()

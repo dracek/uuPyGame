@@ -35,5 +35,6 @@ def show_menu(screen):
                     return GameType.HOST
                 if event.key == 51: #pygame.K_3:
                     return GameType.CLIENT
+
                 if event.key == pygame.K_ESCAPE:
                     return "quit"
