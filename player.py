@@ -27,8 +27,8 @@ class Player:
 
     def update_data(self, transport_data):
         """Update self position from data event"""
-        self.rect.x = transport_data.x
-        self.rect.y = transport_data.y
+        self.rect.x = transport_data["x"]
+        self.rect.y = transport_data["y"]
 
     def update(self, **kwargs):
         """Update self position from move intention"""

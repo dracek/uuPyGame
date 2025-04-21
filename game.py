@@ -349,8 +349,8 @@ class MultiGameClient(AbstractGame):
         # todo adress config ?
 
         headers = {"role": "client", "uid": self.PLAYER1, "name": self.PLAYER1_NAME }
-        self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
-        # self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
+        #self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
+        self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
 
         self.sio.wait()
 
@@ -373,11 +373,11 @@ class MultiGameClient(AbstractGame):
                 self.players[uid] = new_player
 
     def game_state(self, data):
-        print(data, "Got new game state!", data)
+        #print(data, "Got new game state!", data)
 
-        for player_data in data.players:
-            if player_data.uid in self.players:
-                pl = self.players.get(player_data.uid)
+        for player_data in data["players"]:
+            if player_data["uid"] in self.players:
+                pl = self.players.get(player_data["uid"])
                 pl.update_data(player_data)
 
         # self.update_npcs()
