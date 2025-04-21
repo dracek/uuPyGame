@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=import-error
+disable=import-error,fixme
 
 [FORMAT]
 module-naming-style=camelCase
