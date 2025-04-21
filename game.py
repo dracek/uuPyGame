@@ -5,6 +5,8 @@ import time
 from datetime import datetime
 
 import uuid
+
+import psutil
 import pygame
 import socketio
 
@@ -24,7 +26,7 @@ class AbstractGame:
         self.screen = kwargs["screen"]
         self.clock = pygame.time.Clock()
         self.running = True
-        self.tick = GAME_FPS
+        self.tick = 1 * GAME_FPS
         self.players = {}
         self.npcs = []                    # todo DICT by id????
 
@@ -283,11 +285,24 @@ class MultiGameClient(AbstractGame):
         self.npcs.append(NPC(400, 400))
 
         self.client_thread = None
-        self.sio = socketio.Client()
+        self.socket_thread = None
+        self.socket_queue = queue.Queue()
+
+        self.sio = socketio.Client(
+            reconnection=True,
+            reconnection_attempts=20,
+            reconnection_delay=0.1,
+            reconnection_delay_max=5
+        )
         self.sio.on('message', self.message)
         self.sio.on('info', self.info)
 
         self.sio.on('game_state', self.game_state)
+
+        self.sio.on("connect", lambda: print("connected"))
+        self.sio.on("disconnect", lambda x: print("disconnected", x))
+        self.sio.on("reconnect", lambda x: print("reconnected", x))
+        self.sio.on("reconnect_error", lambda x: print("re-er", x))
 
 
     def run(self):
@@ -296,6 +311,9 @@ class MultiGameClient(AbstractGame):
         # sio běží v neblokujícím vlákně
         self.client_thread = threading.Thread(target=self.start_client, daemon=True)
         self.client_thread.start()
+
+        self.socket_thread = threading.Thread(target=self.start_socket, daemon=True)
+        self.socket_thread.start()
 
         cnt = 0
 
@@ -314,6 +332,8 @@ class MultiGameClient(AbstractGame):
 
                 cnt += 1
                 if cnt > (200 * CLIENT_REFRESH_COEF):
+                    cpu = psutil.cpu_percent()
+                    print(f"CPU: {cpu}")
                     print("heartbeat!")
                     now = datetime.now()
                     print(now.strftime("%H:%M:%S.%f")[:-3])
@@ -326,6 +346,20 @@ class MultiGameClient(AbstractGame):
         self.sio.disconnect()
         self.client_thread.join()
 
+    def start_socket(self):
+        """ Vlákno pro komunikaci přes socket, které bude odebírat data z fronty """
+        while self.running:
+            try:
+                while not self.socket_queue.empty():  # Zpracuj všechny dostupné zprávy
+                    name, data = self.socket_queue.get_nowait()
+                    # print("emitted", name )
+                    if self.sio.connected:
+                        self.sio.emit(name, data)
+
+            except queue.Empty:
+                pass  # Pokud fronta je prázdná, čekáme
+
+            time.sleep(0.02)
 
     def handle_key_events(self):
         """Handles key presses"""
@@ -342,7 +376,8 @@ class MultiGameClient(AbstractGame):
         inputs = self.input_manager.get_inputs(self.PLAYER1)
         self.input_manager.clear_inputs(self.PLAYER1)
         if len(inputs) > 0:
-            self.sio.emit("move", {"uid": self.PLAYER1, "inputs": inputs})
+#            self.sio.emit("move", {"uid": self.PLAYER1, "inputs": inputs})
+            self.socket_queue.put(("move", {"uid": self.PLAYER1, "inputs": inputs}))
 
     def start_client(self):
         # todo posílat color v hexa
@@ -350,7 +385,7 @@ class MultiGameClient(AbstractGame):
 
         headers = {"role": "client", "uid": self.PLAYER1, "name": self.PLAYER1_NAME }
         #self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
-        self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
+        self.sio.connect("https://drsnyjelen.cz/", wait_timeout=5, headers=headers, transports=["websocket"])
 
         self.sio.wait()
 
@@ -373,13 +408,12 @@ class MultiGameClient(AbstractGame):
                 self.players[uid] = new_player
 
     def game_state(self, data):
-        #print(data, "Got new game state!", data)
+        # print(data, "Got new game state!", data)
 
         for player_data in data["players"]:
             if player_data["uid"] in self.players:
                 pl = self.players.get(player_data["uid"])
                 pl.update_data(player_data)
-
         # self.update_npcs()
 
         self.render_all()
