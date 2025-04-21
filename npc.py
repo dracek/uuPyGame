@@ -32,9 +32,11 @@ class NPC:
 
 
     def distance(self, rect1, rect2):
+        """Helper function for distance computing"""
         return math.hypot(rect1.x - rect2.x, rect1.y - rect2.y)
 
     def find_closest_player(self, npc, players):
+        """Function for NPC to find which player to chase, not optimized"""
         closest = None
         min_dist = float('inf')
 

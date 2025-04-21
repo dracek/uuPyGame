@@ -1,3 +1,5 @@
+"""UI module"""
+
 import pygame
 from decorators import log_decorator
 from enums import GameType
@@ -7,7 +9,10 @@ from enums import GameType
 def show_menu(screen):
     """Main game menu"""
     font = pygame.font.Font(None, 36)
-    menu_options = ["1: Singleplayer", "2: Multiplayer host", "3: Multiplayer client", "ESC: Ukončení"]
+    menu_options = ["1: Singleplayer",
+                    "2: Multiplayer host",
+                    "3: Multiplayer client",
+                    "ESC: Ukončení"]
 
     while True:
         screen.fill((0, 0, 128))

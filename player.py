@@ -15,9 +15,11 @@ class Player:
         self.speed = PLAYER_SPEED
 
     def set_coords(self, x, y):
+        """Coords setter"""
         self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
 
     def set_name(self, name):
+        """Name setter"""
         self.name = name
 
 

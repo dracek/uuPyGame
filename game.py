@@ -1,6 +1,7 @@
+"""Game module"""
+
 import queue
 import threading
-import asyncio
 import time
 from datetime import datetime
 
@@ -14,11 +15,11 @@ from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
 
-from config import GAME_FPS, CLIENT_REFRESH_COEF, INFO_TIMER
+from config import GAME_FPS, CLIENT_REFRESH_COEF, INFO_TIMER, GATEWAY_ADDRESS
 
 
 class AbstractGame:
-    """Abstract ancestor"""
+    """Abstract game ancestor"""
 
     def __init__(self, **kwargs):
         self.input_manager = InputManager()
@@ -31,6 +32,7 @@ class AbstractGame:
         self.npcs = []                    # todo DICT by id????
 
     def short_uid(self, length=8):
+        """Helper uid function"""
         return uuid.uuid4().hex[:length]
 
     def handle_events(self):
@@ -42,7 +44,7 @@ class AbstractGame:
 
     def handle_key_events(self):
         """Handles key presses"""
-        raise NotImplemented
+        raise NotImplementedError
 
 
     def update_players(self,  **kwargs):
@@ -85,8 +87,6 @@ class AbstractGame:
             self.clock.tick(self.tick)
 
         print("Closing game ....")
-
-
 
 
 class SingleGame(AbstractGame):
@@ -218,7 +218,8 @@ class MultiGameHost(AbstractGame):
             time.sleep(0.01)
 
     def start_info(self):
-        while True:
+        """Info heartbeat thread"""
+        while self.running:
             time.sleep(INFO_TIMER)  # Pauza 1 sekunda
             if self.sio.connected:
                 print("heartbeat!")
@@ -227,27 +228,27 @@ class MultiGameHost(AbstractGame):
                 self.sio.emit("info")
 
     def start_client(self):
-        # todo nejak posílat player color
-        # todo config ?
-
+        """SIO connection thread"""
         headers = {"role": "host", "uid": self.PLAYER1, "name": self.PLAYER1_NAME }
-        #self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
-        self.sio.connect("https://drsnyjelen.cz/", headers=headers, transports=["websocket"])
+        self.sio.connect(GATEWAY_ADDRESS, headers=headers, transports=["websocket"])
         self.sio.wait()
 
     def send_all_positions(self):
+        """Position synchronizing method"""
+
         player_data = [player.get_transport_data() for player in self.players.values()]
 
         npc_data = [] # todo :)
 
         self.socket_queue.put(("game_state", {"players": player_data, "npcs": npc_data}))
-        # self.sio.emit("game_state", {"players": player_data, "npcs": npc_data})
 
 
     def message(self, msg):
+        """Message handler"""
         print("Got new message!", msg)
 
     def info(self, msg):
+        """Info handler"""
         now = datetime.now()
         print(now.strftime("%H:%M:%S.%f")[:-3])
         print("Got info!", msg)
@@ -263,6 +264,7 @@ class MultiGameHost(AbstractGame):
                 self.players[uid] = new_player
 
     def move(self, data):
+        """Incoming move handler"""
         # print(data, "Got move!", data)
         self.input_manager.add_inputs(data["uid"], data["inputs"])
 
@@ -273,14 +275,14 @@ class MultiGameClient(AbstractGame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.PLAYER1 = self.short_uid()
-        self.PLAYER1_NAME = "Some player" # todo config?
-        pl1 = Player(self.PLAYER1)
+        self.player1_id = self.short_uid()
+        self.player1_name = "Some player" # todo config?
+        pl1 = Player(self.player1_id)
         pl1.set_coords(20,20)
-        pl1.set_name(self.PLAYER1_NAME)
-        self.players[self.PLAYER1] = pl1
+        pl1.set_name(self.player1_name)
+        self.players[self.player1_id] = pl1
 
-        self.input_manager.add_keymap(self.PLAYER1, PLAYER_KEYMAPS["wasd"])
+        self.input_manager.add_keymap(self.player1_id, PLAYER_KEYMAPS["wasd"])
 
         self.npcs.append(NPC(400, 400))
 
@@ -294,15 +296,17 @@ class MultiGameClient(AbstractGame):
             reconnection_delay=0.1,
             reconnection_delay_max=5
         )
+
+        # sio handlers
         self.sio.on('message', self.message)
         self.sio.on('info', self.info)
-
         self.sio.on('game_state', self.game_state)
 
+        # sio info block
         self.sio.on("connect", lambda: print("connected"))
         self.sio.on("disconnect", lambda x: print("disconnected", x))
         self.sio.on("reconnect", lambda x: print("reconnected", x))
-        self.sio.on("reconnect_error", lambda x: print("re-er", x))
+        self.sio.on("reconnect_error", lambda x: print("reconnect-error", x))
 
 
     def run(self):
@@ -340,7 +344,9 @@ class MultiGameClient(AbstractGame):
                     self.sio.emit("info")
                     cnt = 0
 
-            self.clock.tick(self.tick * CLIENT_REFRESH_COEF) # rychlejsi tick, protoze se updatuje eventem
+            # todo: rychlejsi tick, protoze se updatuje eventem
+            # ale pozor na zahlceni socketu
+            self.clock.tick(self.tick * CLIENT_REFRESH_COEF)
 
         print("Closing game!")
         self.sio.disconnect()
@@ -368,31 +374,33 @@ class MultiGameClient(AbstractGame):
 
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
-                self.input_manager.add_input(self.PLAYER1, key)
+                self.input_manager.add_input(self.player1_id, key)
 
     def send_key_events(self):
         """Send key presses to socket"""
 
-        inputs = self.input_manager.get_inputs(self.PLAYER1)
-        self.input_manager.clear_inputs(self.PLAYER1)
+        inputs = self.input_manager.get_inputs(self.player1_id)
+        self.input_manager.clear_inputs(self.player1_id)
         if len(inputs) > 0:
 #            self.sio.emit("move", {"uid": self.PLAYER1, "inputs": inputs})
-            self.socket_queue.put(("move", {"uid": self.PLAYER1, "inputs": inputs}))
+            self.socket_queue.put(("move", {"uid": self.player1_id, "inputs": inputs}))
 
     def start_client(self):
-        # todo posílat color v hexa
-        # todo adress config ?
+        """Sio connect thread"""
 
-        headers = {"role": "client", "uid": self.PLAYER1, "name": self.PLAYER1_NAME }
-        #self.sio.connect("http://localhost:3333", headers=headers, transports=["websocket"])
-        self.sio.connect("https://drsnyjelen.cz/", wait_timeout=5, headers=headers, transports=["websocket"])
+        # todo posílat color v hexa
+
+        headers = {"role": "client", "uid": self.player1_id, "name": self.player1_name}
+        self.sio.connect(GATEWAY_ADDRESS, wait_timeout=5, headers=headers, transports=["websocket"])
 
         self.sio.wait()
 
     def message(self, msg):
+        """Message handler"""
         print("Got new message!", msg)
 
     def info(self, msg):
+        """Info handler"""
         now = datetime.now()
         print(now.strftime("%H:%M:%S.%f")[:-3])
         print("Got info!", msg)
@@ -408,6 +416,7 @@ class MultiGameClient(AbstractGame):
                 self.players[uid] = new_player
 
     def game_state(self, data):
+        """Incoming game state handler"""
         # print(data, "Got new game state!", data)
 
         for player_data in data["players"]:
@@ -418,6 +427,3 @@ class MultiGameClient(AbstractGame):
 
         self.render_all()
         pygame.display.flip()
-
-
-

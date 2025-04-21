@@ -1,3 +1,5 @@
+"""Helper decorators module"""
+
 import functools
 
 def log(func):
