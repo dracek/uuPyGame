@@ -13,5 +13,9 @@ GAME_FPS = 50
 CLIENT_REFRESH_COEF = 1
 INFO_TIMER = 1
 
+
+BULLET_SPEED = 5
+BULLET_SIZE = 5
+
 GATEWAY_ADDRESS = 'https://drsnyjelen.cz'
 #GATEWAY_ADDRESS = "http://localhost:3333"

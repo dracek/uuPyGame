@@ -64,6 +64,7 @@ class AbstractGame:
                 self.npc_last_shot_times[npc_id] = now
 
 
+
     def short_uid(self, length=8):
         """Helper uid function"""
         return uuid.uuid4().hex[:length]
