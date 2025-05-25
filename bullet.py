@@ -1,10 +1,7 @@
 import pygame
 import math
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, BULLET_SIZE, BULLET_SPEED
 
-from pygame.examples.scrap_clipboard import screen
-
-BULLET_SPEED = 5
-BULLET_SIZE = 5
 
 class Bullet:
     def __init__(self, x, y, target_x, target_y,color=(0, 0, 0)):
@@ -22,5 +19,5 @@ class Bullet:
         pygame.draw.rect(screen,self.color, self.rect)
 
     def is_off_screen(self):
-        return (self.rect.x < 0 or self.rect.x > 800 or
-                self.rect.y < 0 or self.rect.y > 600)
+        return (self.rect.x < 0 or self.rect.x > SCREEN_WIDTH or
+                self.rect.y < 0 or self.rect.y > SCREEN_HEIGHT)
