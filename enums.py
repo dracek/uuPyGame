@@ -21,3 +21,4 @@ class Facing(StrEnum):
     DOWN = auto()
     LEFT = auto()
     RIGHT = auto()
+    SHOOT = auto()

@@ -7,6 +7,9 @@ from enums import KeyType, Facing
 
 movement_keys = {KeyType.LEFT.name, KeyType.RIGHT.name, KeyType.UP.name, KeyType.DOWN.name}
 
+from bullet import Bullet
+import random
+
 class Player:
     """Player class init"""
     def __init__(self, uid):
@@ -18,6 +21,11 @@ class Player:
         self.speed = PLAYER_SPEED
         self.is_moving = False
         self.facing = Facing.RIGHT
+
+        self.bullets = []
+        self.shoot_cooldown = 20
+        self.shoot_timer = 0
+        self.bullet_color = (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
 
     def set_coords(self, x, y):
         """Coords setter"""
@@ -31,6 +39,7 @@ class Player:
         """Update self position from move intention"""
 
         inp = kwargs["inputs"]
+        mouse_pos = kwargs.get("mouse_pos",(self.rect.centerx,self.rect.centery))
 
         self.is_moving = any(key in inp for key in movement_keys)
 
@@ -54,6 +63,26 @@ class Player:
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
         self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
 
+        if KeyType.SHOOT.name in inp and self.shoot_timer <=0:
+            self.shoot(mouse_pos)
+            self.shoot_timer = self.shoot_cooldown
+        elif self.shoot_timer > 0:
+            self.shoot_timer -= 1
+
+        for bullet in self.bullets:
+            bullet.update()
+        self.bullets = [b for b in self.bullets if not b.is_off_screen()]
+
+    def shoot(self, target_pos=None, color=(255, 255, 0)):
+        if target_pos is None:
+            target_pos = (400, 300)
+
+        bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=color)
+        self.bullets.append(bullet)
+        return bullet
+
     def draw(self, screen):
         """Draws itself"""
         pygame.draw.rect(screen, self.color, self.rect)
+        for bullet in self.bullets:
+            bullet.draw(screen)

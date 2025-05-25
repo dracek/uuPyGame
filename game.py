@@ -1,5 +1,6 @@
 """Game module"""
 
+
 import uuid
 
 import pygame
@@ -23,6 +24,7 @@ class AbstractGame:
         self.tick = 1 * GAME_FPS
         self.players = {}
         self.npcs = []                    # todo DICT by id????
+        self.bullets = []
 
     def short_uid(self, length=8):
         """Helper uid function"""
@@ -65,6 +67,16 @@ class AbstractGame:
         for npc in self.npcs:
             npc.draw(self.screen)
 
+        for bullet in self.bullets:
+            bullet.draw(self.screen)
+
+    def update_bullets(self):
+        """Update bullets position"""
+        for bullet in self.bullets[:]:
+            bullet.update()
+            if bullet.is_off_screen():
+                self.bullets.remove(bullet)
+
 
     def run(self):
         """Running loop"""
@@ -74,6 +86,7 @@ class AbstractGame:
 
             self.update_players()
             self.update_npcs()
+            self.update_bullets()
 
             self.render_all()
             pygame.display.flip()
@@ -107,6 +120,9 @@ class SingleGame(AbstractGame):
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
 
+        for key in PLAYER_KEYMAPS["arrows"].keys():
+            if keys[key]:
+                self.input_manager.add_input(self.PLAYER2, key)
 
 class CoopGame(AbstractGame):
     """Single player game"""
@@ -131,6 +147,54 @@ class CoopGame(AbstractGame):
         self.input_manager.add_keymap(self.PLAYER2, PLAYER_KEYMAPS["arrows"])
 
         self.npcs.append(NPC(400, 400))
+
+        self.client_thread = None
+        self.info_thread = None
+        self.socket_thread = None
+        self.socket_queue = queue.Queue()
+
+        self.sio = socketio.Client()
+        self.sio.on('message', self.message)
+        self.sio.on('info', self.info)
+
+        self.sio.on('move', self.move)
+
+    def run(self):
+        """Running loop"""
+
+        # sio běží v neblokujícím vlákně
+        self.client_thread = threading.Thread(target=self.start_client, daemon=True)
+        self.client_thread.start()
+
+        self.info_thread = threading.Thread(target=self.start_info, daemon=True)
+        self.info_thread.start()
+
+        self.socket_thread = threading.Thread(target=self.start_socket, daemon=True)
+        self.socket_thread.start()
+
+        while self.running:
+
+            if not self.sio.connected:
+                print("Connecting to server")  # todo better gui!
+            else:
+                self.handle_events()
+                self.handle_key_events()
+
+                self.update_players()
+                self.update_npcs()
+                self.send_all_positions()
+
+                self.render_all()
+                pygame.display.flip()
+
+            self.clock.tick(self.tick)
+
+        print("Closing game!")
+        self.info_thread.join()
+        self.socket_thread.join()
+        self.sio.disconnect()
+        self.client_thread.join()
+
 
     def handle_key_events(self):
         """Handles key presses"""
