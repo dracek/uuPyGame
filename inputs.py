@@ -9,7 +9,6 @@ PLAYER_KEYMAPS = {
         pygame.K_s: KeyType.DOWN.name,
         pygame.K_a: KeyType.LEFT.name,
         pygame.K_d: KeyType.RIGHT.name,
-        pygame.K_SPACE: KeyType.SHOOT.name,
     },
     "arrows": {
         pygame.K_UP: KeyType.UP.name,

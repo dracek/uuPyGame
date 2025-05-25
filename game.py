@@ -32,6 +32,9 @@ class AbstractGame:
         self.players = {}
         self.npcs = []                    # todo DICT by id????
         self.bullets = []
+        self.player_bullets = []
+        self.npc_bullets = []
+
 
     def short_uid(self, length=8):
         """Helper uid function"""
@@ -74,15 +77,19 @@ class AbstractGame:
         for npc in self.npcs:
             npc.draw(self.screen)
 
-        for bullet in self.bullets:
+        for bullet in self.player_bullets:
+            bullet.draw(self.screen)
+
+        for bullet in self.npc_bullets:
             bullet.draw(self.screen)
 
     def update_bullets(self):
         """Update bullets position"""
-        for bullet in self.bullets[:]:
-            bullet.update()
-            if bullet.is_off_screen():
-                self.bullets.remove(bullet)
+        for bullet_list in [self.player_bullets, self.npc_bullets]:
+            for bullet in bullet_list[:]:
+                bullet.update()
+                if bullet.is_off_screen():
+                    bullet_list.remove(bullet)
 
 
     def run(self):
@@ -130,6 +137,7 @@ class SingleGame(AbstractGame):
         """Handles key presses"""
 
         keys = pygame.key.get_pressed()
+        mouse_buttons = pygame.mouse.get_pressed()
 
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
@@ -139,10 +147,11 @@ class SingleGame(AbstractGame):
             #if keys[key]:
                 #self.input_manager.add_input(self.PLAYER2, key)
 
-        if keys[pygame.K_SPACE]:
+        if mouse_buttons[0]:
             player = self.players[self.PLAYER1]
             target_pos = pygame.mouse.get_pos()
-            self.bullets.append(player.shoot(target_pos, color=(255, 255, 0)))
+            bullet = player.shoot(target_pos, color=player.color)
+            self.player_bullets.append(bullet)
 
 
 class MultiGameHost(AbstractGame):
@@ -217,15 +226,17 @@ class MultiGameHost(AbstractGame):
         """Handles key presses"""
 
         keys = pygame.key.get_pressed()
+        mouse_buttons = pygame.mouse.get_pressed()
 
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
 
-        if keys[pygame.K_SPACE]:
+        if mouse_buttons[0]:
             player = self.players[self.PLAYER1]
             target_pos = pygame.mouse.get_pos()
-            self.bullets.append(player.shoot(target_pos, color=self.bullet_color))
+            bullet = player.shoot(target_pos, color=player.color)
+            self.player_bullets.append(bullet)
 
 
     def start_socket(self):
@@ -396,15 +407,17 @@ class MultiGameClient(AbstractGame):
         """Handles key presses"""
 
         keys = pygame.key.get_pressed()
+        mouse_buttons = pygame.mouse.get_pressed()
 
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
                 self.input_manager.add_input(self.player1_id, key)
 
-        if keys[pygame.K_SPACE]:
+        if mouse_buttons[0]:
             player = self.players[self.PLAYER1]
             target_pos = pygame.mouse.get_pos()
-            self.bullets.append(player.shoot(target_pos))
+            bullet = player.shoot(target_pos, color=player.color)
+            self.player_bullets.append(bullet)
 
     def send_key_events(self):
         """Send key presses to socket"""

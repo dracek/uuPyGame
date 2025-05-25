@@ -16,10 +16,8 @@ class Player:
         self.name = "Player1"
         self.speed = PLAYER_SPEED
 
-        self.bullets = []
-        self.shoot_cooldown = 20
+        self.shoot_cooldown = 120
         self.shoot_timer = 0
-        self.bullet_color = (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
 
     def set_coords(self, x, y):
         """Coords setter"""
@@ -66,20 +64,17 @@ class Player:
         elif self.shoot_timer > 0:
             self.shoot_timer -= 1
 
-        for bullet in self.bullets:
-            bullet.update()
-        self.bullets = [b for b in self.bullets if not b.is_off_screen()]
 
-    def shoot(self, target_pos=None, color=(255, 255, 0)):
+    def shoot(self, target_pos=None, color=None):
         if target_pos is None:
             target_pos = (400, 300)
 
+        if color is None:
+            color = self.color
+
         bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=color)
-        self.bullets.append(bullet)
         return bullet
 
     def draw(self, screen):
         """Draws itself"""
         pygame.draw.rect(screen, self.color, self.rect)
-        for bullet in self.bullets:
-            bullet.draw(screen)
