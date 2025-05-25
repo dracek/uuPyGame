@@ -14,7 +14,6 @@ class NPC:
 
     def update(self, **kwargs):
         """Updates self position according to players"""
-        players = kwargs["players"].values()
         nearest_player = self.find_closest_player(self, kwargs["players"].values())
 
 
@@ -30,11 +29,11 @@ class NPC:
     def get_shot_target(self, players):
         return self.find_closest_player(self, players)
 
-    def shoot(self, target):
-        bullet = Bullet(self.rect.centerx, self.rect.centery,
-                        target.rect.centerx, target.rect.centery,
-                        color=(255, 0, 0))
-        self.bullets.append(bullet)
+   # def shoot(self, target):
+   #     bullet = Bullet(self.rect.centerx, self.rect.centery,
+   #                     target.rect.centerx, target.rect.centery,
+   #                     color=(255, 0, 0))
+   #     self.bullets.append(bullet)
 
     def draw(self, screen):
         """Draws itself"""
