@@ -16,8 +16,6 @@ class Player:
         self.name = "Player1"
         self.speed = PLAYER_SPEED
 
-        self.shoot_cooldown = 120
-        self.shoot_timer = 0
 
     def set_coords(self, x, y):
         self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
@@ -56,11 +54,6 @@ class Player:
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
         self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
 
-        if KeyType.SHOOT.name in inp and self.shoot_timer <=0:
-            self.shoot(mouse_pos)
-            self.shoot_timer = self.shoot_cooldown
-        elif self.shoot_timer > 0:
-            self.shoot_timer -= 1
 
 
     def shoot(self, target_pos=None, color=None):
