@@ -26,7 +26,6 @@ class Player:
         self.name = name
 
 
-
     def get_transport_data(self):
         """Prepare data for data event"""
         return {"uid": self.uid, "x": self.rect.x, "y": self.rect.y}

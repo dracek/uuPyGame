@@ -6,7 +6,6 @@ import pygame
 from config import NPC_SPEED
 from bullet import Bullet
 
-
 class NPC:
     """NPC common class"""
     def __init__(self, x, y):
