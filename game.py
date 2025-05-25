@@ -5,6 +5,7 @@ import uuid
 
 import pygame
 
+from bullet import Bullet
 from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
@@ -24,9 +25,36 @@ class AbstractGame:
         self.tick = 1 * GAME_FPS
         self.players = {}
         self.npcs = []                    # todo DICT by id????
+
         self.bullets = []
         self.player_bullets = []
         self.npc_bullets = []
+        self.last_shot_times = {}
+        self.shoot_cooldown = 250
+        self.npc_last_shot_times = {}
+        self.npc_shoot_cooldown = 150
+
+    def try_shoot(self, uid, target_pos):
+        now = pygame.time.get_ticks()
+        last_shot = self.last_shot_times.get(uid, 0)
+        if now - last_shot >= self.shoot_cooldown:
+            player = self.players[uid]
+            bullet = player.shoot(target_pos, color=player.color)
+            self.player_bullets.append(bullet)
+            self.last_shot_times[uid] = now
+
+    def try_npc_shoot(self, npc):
+        now = pygame.time.get_ticks()
+        npc_id = id(npc)
+        last_shot = self.npc_last_shot_times.get(npc_id, 0)
+        if now - last_shot >= self.npc_shoot_cooldown:
+            target = npc.get_shot_target(self.players.values())
+            if target:
+                bullet = Bullet(npc.rect.centerx, npc.rect.centery,
+                                target.rect.centerx, target.rect.centery,
+                                color=(255, 0, 0))
+                self.npc_bullets.append(bullet)
+                self.npc_last_shot_times[npc_id] = now
 
 
     def short_uid(self, length=8):
@@ -58,6 +86,7 @@ class AbstractGame:
 
         for npc in self.npcs:
             npc.update(players = self.players, **kwargs)
+            self.try_npc_shoot(npc)
 
 
     def render_all(self):
@@ -133,10 +162,7 @@ class SingleGame(AbstractGame):
                 #self.input_manager.add_input(self.PLAYER2, key)
 
         if mouse_buttons[0]:
-            player = self.players[self.PLAYER1]
-            target_pos = pygame.mouse.get_pos()
-            bullet = player.shoot(target_pos, color=player.color)
-            self.player_bullets.append(bullet)
+            self.try_shoot(self.PLAYER1, pygame.mouse.get_pos())
 
 class CoopGame(AbstractGame):
     """Single player game"""
@@ -196,6 +222,7 @@ class CoopGame(AbstractGame):
 
                 self.update_players()
                 self.update_npcs()
+                self.update_bullets()
                 self.send_all_positions()
 
                 self.render_all()
