@@ -4,6 +4,7 @@ import asyncio
 import time
 from datetime import datetime
 
+
 import uuid
 
 import psutil
@@ -29,6 +30,7 @@ class AbstractGame:
         self.tick = 1 * GAME_FPS
         self.players = {}
         self.npcs = []                    # todo DICT by id????
+        self.bullets = []
 
     def short_uid(self, length=8):
         return uuid.uuid4().hex[:length]
@@ -70,6 +72,16 @@ class AbstractGame:
         for npc in self.npcs:
             npc.draw(self.screen)
 
+        for bullet in self.bullets:
+            bullet.draw(self.screen)
+
+    def update_bullets(self):
+        """Update bullets position"""
+        for bullet in self.bullets[:]:
+            bullet.update()
+            if bullet.is_off_screen():
+                self.bullets.remove(bullet)
+
 
     def run(self):
         """Running loop"""
@@ -79,6 +91,7 @@ class AbstractGame:
 
             self.update_players()
             self.update_npcs()
+            self.update_bullets()
 
             self.render_all()
             pygame.display.flip()
@@ -93,7 +106,7 @@ class SingleGame(AbstractGame):
     """Single player game"""
 
     PLAYER1 = "Player1"
-    PLAYER2 = "Player2"
+    #PLAYER2 = "Player2"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -104,12 +117,12 @@ class SingleGame(AbstractGame):
 
         self.input_manager.add_keymap(self.PLAYER1, PLAYER_KEYMAPS["wasd"])
 
-        pl2 = Player(self.PLAYER2)  # experimental player 2
-        pl2.set_coords(100, 20)
-        pl2.color = (0,0,255)
-        self.players[self.PLAYER2] = pl2
+        #pl2 = Player(self.PLAYER2)  # experimental player 2
+        #pl2.set_coords(100, 20)
+        #pl2.color = (0,0,255)
+        #self.players[self.PLAYER2] = pl2
 
-        self.input_manager.add_keymap(self.PLAYER2, PLAYER_KEYMAPS["arrows"])
+        #self.input_manager.add_keymap(self.PLAYER2, PLAYER_KEYMAPS["arrows"])
 
         self.npcs.append(NPC(400, 400))
 
@@ -122,9 +135,14 @@ class SingleGame(AbstractGame):
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
 
-        for key in PLAYER_KEYMAPS["arrows"].keys():
-            if keys[key]:
-                self.input_manager.add_input(self.PLAYER2, key)
+        #for key in PLAYER_KEYMAPS["arrows"].keys():
+            #if keys[key]:
+                #self.input_manager.add_input(self.PLAYER2, key)
+
+        if keys[pygame.K_SPACE]:
+            player = self.players[self.PLAYER1]
+            target_pos = pygame.mouse.get_pos()
+            self.bullets.append(player.shoot(target_pos, color=(255, 255, 0)))
 
 
 class MultiGameHost(AbstractGame):
@@ -193,6 +211,8 @@ class MultiGameHost(AbstractGame):
         self.client_thread.join()
 
 
+
+
     def handle_key_events(self):
         """Handles key presses"""
 
@@ -201,6 +221,11 @@ class MultiGameHost(AbstractGame):
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
+
+        if keys[pygame.K_SPACE]:
+            player = self.players[self.PLAYER1]
+            target_pos = pygame.mouse.get_pos()
+            self.bullets.append(player.shoot(target_pos, color=self.bullet_color))
 
 
     def start_socket(self):
@@ -369,6 +394,11 @@ class MultiGameClient(AbstractGame):
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
+
+        if keys[pygame.K_SPACE]:
+            player = self.players[self.PLAYER1]
+            target_pos = pygame.mouse.get_pos()
+            self.bullets.append(player.shoot(target_pos))
 
     def send_key_events(self):
         """Send key presses to socket"""
