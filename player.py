@@ -3,6 +3,8 @@
 import pygame
 from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
 from enums import KeyType
+from bullet import Bullet
+import random
 
 class Player:
     """Player class init"""
@@ -13,6 +15,10 @@ class Player:
         self.color = (0, 255, 0)
         self.name = "Player1"
         self.speed = PLAYER_SPEED
+
+        self.health = 100
+        self.max_health = 100
+
 
     def set_coords(self, x, y):
         """Coords setter"""
@@ -36,6 +42,7 @@ class Player:
         """Update self position from move intention"""
 
         inp = kwargs["inputs"]
+        mouse_pos = kwargs.get("mouse_pos",(self.rect.centerx,self.rect.centery))
 
         if KeyType.LEFT.name in inp:
             self.rect.x -= self.speed
@@ -52,6 +59,27 @@ class Player:
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
         self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
 
+
+
+    def shoot(self, target_pos=None, color=None):
+        if target_pos is None:
+            target_pos = (400, 300)
+
+        if color is None:
+            color = self.color
+
+        bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=color)
+        return bullet
+
+    def draw_lifebar(self,screen):
+        bar_width = self.rect.width
+        bar_heigth = 5
+        fill = (self.health/self.max_health) * bar_width
+
+        pygame.draw.rect(screen,(255,0,0),(self.rect.x,self.rect.y - 10,bar_width, bar_heigth))
+        pygame.draw.rect(screen,(0, 255, 0),(self.rect.x, self.rect.y - 10, fill, bar_heigth))
+
     def draw(self, screen):
         """Draws itself"""
         pygame.draw.rect(screen, self.color, self.rect)
+        self.draw_lifebar(screen)

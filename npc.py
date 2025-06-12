@@ -4,16 +4,18 @@ import math
 import pygame
 
 from config import NPC_SPEED
-
+from bullet import Bullet
 
 class NPC:
     """NPC common class"""
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 20, 20)
 
+        self.health = 100
+        self.max_health = 100
+
     def update(self, **kwargs):
         """Updates self position according to players"""
-
         nearest_player = self.find_closest_player(self, kwargs["players"].values())
 
 
@@ -26,9 +28,27 @@ class NPC:
         elif self.rect.y > nearest_player.rect.y:
             self.rect.y -= NPC_SPEED
 
+    def get_shot_target(self, players):
+        return self.find_closest_player(self, players)
+
+   # def shoot(self, target):
+   #     bullet = Bullet(self.rect.centerx, self.rect.centery,
+   #                     target.rect.centerx, target.rect.centery,
+   #                     color=(255, 0, 0))
+   #     self.bullets.append(bullet)
+
+    def draw_lifebar(self,screen):
+        bar_width = self.rect.width
+        bar_heigth = 5
+        fill = (self.health/self.max_health) * bar_width
+
+        pygame.draw.rect(screen,(255,0,0),(self.rect.x,self.rect.y - 10,bar_width, bar_heigth))
+        pygame.draw.rect(screen, (0, 255, 0), (self.rect.x, self.rect.y - 10, fill, bar_heigth))
+
     def draw(self, screen):
         """Draws itself"""
         pygame.draw.rect(screen, (255, 0, 0), self.rect)
+        self.draw_lifebar(screen)
 
 
     def distance(self, rect1, rect2):
