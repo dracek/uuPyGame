@@ -15,6 +15,7 @@ PLAYER_KEYMAPS = {
         pygame.K_DOWN: KeyType.DOWN.name,
         pygame.K_LEFT: KeyType.LEFT.name,
         pygame.K_RIGHT: KeyType.RIGHT.name,
+        pygame.K_RETURN: KeyType.SHOOT.name
     }
 }
 
