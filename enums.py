@@ -6,8 +6,7 @@ from enum import auto, StrEnum
 class GameType(StrEnum):
     """Game type enum"""
     SINGLE = auto()
-    HOST = auto()
-    CLIENT = auto()
+    COOP = auto()
 
 class KeyType(StrEnum):
     """Directions enum"""

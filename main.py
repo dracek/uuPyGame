@@ -3,7 +3,7 @@
 import pygame
 
 from enums import GameType
-from game import SingleGame, MultiGameHost, MultiGameClient
+from game import SingleGame, CoopGame
 from ui import show_menu
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -25,12 +25,8 @@ def main():
             game = SingleGame(screen=screen)
             game.run()
 
-        if choice == GameType.HOST:
-            game = MultiGameHost(screen=screen)
-            game.run()
-
-        if choice == GameType.CLIENT:
-            game = MultiGameClient(screen=screen)
+        if choice == GameType.COOP:
+            game = CoopGame(screen=screen)
             game.run()
 
         elif choice == "quit":
