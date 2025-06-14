@@ -31,6 +31,7 @@ class AbstractGame:
         self.npc_last_shot_times = {}
         self.npc_shoot_cooldown = 500
 
+
     def try_npc_shoot(self, npc):
         now = pygame.time.get_ticks()
         npc_id = id(npc)

@@ -1,5 +1,5 @@
 """Player module"""
-
+import math
 import pygame
 
 from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
@@ -19,6 +19,7 @@ class Player:
         self.speed = PLAYER_SPEED
         self.is_moving = False
         self.facing = Facing.RIGHT
+
 
         self.shoot_cooldown = 250
         self.last_shot_time = pygame.time.get_ticks()
@@ -59,20 +60,37 @@ class Player:
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
         self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
 
+    def distance(self, rect1, rect2):
+        """Helper function for distance computing"""
+        return math.hypot(rect1.x - rect2.x, rect1.y - rect2.y)
+
+    def find_closest_npc(self, npcs):
+        closest = None
+        min_dist = float('inf')
+
+        for npc in npcs:
+            dist = self.distance(self.rect, npc.rect)
+            if dist < min_dist:
+                min_dist = dist
+                closest = npc
+
+        return closest
+
 
     def shoot(self, npcs):
         """Try to shoot, does not fire in cooldown"""
 
         now = pygame.time.get_ticks()
-
         if now - self.last_shot_time >= self.shoot_cooldown:
+            target = self.find_closest_npc(npcs)
+            if target is None:
+                return None
 
-            #if target_pos is None:# todo targetting here.
-            target_pos = (400, 300)
-
+            target_pos = (target.rect.centerx, target.rect.centery)
             bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=self.color)
             self.last_shot_time = now
             return bullet
+
 
     def draw(self, screen):
         """Draws itself"""
