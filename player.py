@@ -1,8 +1,11 @@
 """Player module"""
 
 import pygame
+
 from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
-from enums import KeyType
+from enums import KeyType, Facing
+
+movement_keys = {KeyType.LEFT.name, KeyType.RIGHT.name, KeyType.UP.name, KeyType.DOWN.name}
 
 class Player:
     """Player class init"""
@@ -13,6 +16,8 @@ class Player:
         self.color = (0, 255, 0)
         self.name = "Player1"
         self.speed = PLAYER_SPEED
+        self.is_moving = False
+        self.facing = Facing.RIGHT
 
     def set_coords(self, x, y):
         """Coords setter"""
@@ -22,31 +27,28 @@ class Player:
         """Name setter"""
         self.name = name
 
-
-    def get_transport_data(self):
-        """Prepare data for data event"""
-        return {"uid": self.uid, "x": self.rect.x, "y": self.rect.y}
-
-    def update_data(self, transport_data):
-        """Update self position from data event"""
-        self.rect.x = transport_data["x"]
-        self.rect.y = transport_data["y"]
-
     def update(self, **kwargs):
         """Update self position from move intention"""
 
         inp = kwargs["inputs"]
 
-        if KeyType.LEFT.name in inp:
-            self.rect.x -= self.speed
-        if KeyType.RIGHT.name in inp:
-            self.rect.x += self.speed
+        self.is_moving = any(key in inp for key in movement_keys)
+
         if KeyType.UP.name in inp:
             self.rect.y -= self.speed
-        if KeyType.DOWN.name in inp:
+            self.facing = Facing.UP
+        elif KeyType.DOWN.name in inp:
             self.rect.y += self.speed
+            self.facing = Facing.DOWN
 
-        # overflow corrections
+        if KeyType.LEFT.name in inp:
+            self.rect.x -= self.speed
+            self.facing = Facing.LEFT
+        elif KeyType.RIGHT.name in inp:
+            self.rect.x += self.speed
+            self.facing = Facing.RIGHT
+
+        # overflow corrections - todo možná udělat přes kolize!
         self.rect.x = max(self.rect.x, 0)
         self.rect.y = max(self.rect.y, 0)
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)

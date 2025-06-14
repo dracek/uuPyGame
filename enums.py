@@ -14,3 +14,10 @@ class KeyType(StrEnum):
     DOWN = auto()
     LEFT = auto()
     RIGHT = auto()
+
+class Facing(StrEnum):
+    """Directions enum"""
+    UP = auto()
+    DOWN = auto()
+    LEFT = auto()
+    RIGHT = auto()
