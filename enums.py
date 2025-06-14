@@ -14,6 +14,7 @@ class KeyType(StrEnum):
     DOWN = auto()
     LEFT = auto()
     RIGHT = auto()
+    SHOOT = auto()
 
 class Facing(StrEnum):
     """Directions enum"""

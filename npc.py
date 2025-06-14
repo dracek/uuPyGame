@@ -1,10 +1,8 @@
 """NPC module"""
 import math
-
 import pygame
 
 from config import NPC_SPEED
-from bullet import Bullet
 
 class NPC:
     """NPC common class"""
