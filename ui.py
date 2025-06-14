@@ -9,9 +9,8 @@ from enums import GameType
 def show_menu(screen):
     """Main game menu"""
     font = pygame.font.Font(None, 36)
-    menu_options = ["1: Singleplayer",
-                    "2: Multiplayer host",
-                    "3: Multiplayer client",
+    menu_options = ["1: Single player",
+                    "2: Cooperative",
                     "ESC: Ukončení"]
 
     while True:
@@ -32,9 +31,7 @@ def show_menu(screen):
                 if event.key == 49: #pygame.K_1:
                     return GameType.SINGLE
                 if event.key == 50: #pygame.K_2:
-                    return GameType.HOST
-                if event.key == 51: #pygame.K_3:
-                    return GameType.CLIENT
+                    return GameType.COOP
 
                 if event.key == pygame.K_ESCAPE:
                     return "quit"
