@@ -1,9 +1,9 @@
 """Game module"""
 
-import uuid
-
 import pygame
 
+from bullet import Bullet
+from enums import KeyType
 from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
@@ -24,9 +24,25 @@ class AbstractGame:
         self.players = {}
         self.npcs = []                    # todo DICT by id????
 
-    def short_uid(self, length=8):
-        """Helper uid function"""
-        return uuid.uuid4().hex[:length]
+        self.bullets = []
+        self.player_bullets = []
+        self.npc_bullets = []
+
+        self.npc_last_shot_times = {}
+        self.npc_shoot_cooldown = 500
+
+    def try_npc_shoot(self, npc):
+        now = pygame.time.get_ticks()
+        npc_id = id(npc)
+        last_shot = self.npc_last_shot_times.get(npc_id, 0)
+        if now - last_shot >= self.npc_shoot_cooldown:
+            target = npc.get_shot_target(self.players.values())
+            if target:
+                bullet = Bullet(npc.rect.centerx, npc.rect.centery,
+                                target.rect.centerx, target.rect.centery,
+                                color=(255, 0, 0))
+                self.npc_bullets.append(bullet)
+                self.npc_last_shot_times[npc_id] = now
 
     def handle_events(self):
         """Handles events and interruptions"""
@@ -44,7 +60,16 @@ class AbstractGame:
         """Handles players updates"""
 
         for player in self.players.values():
-            player.update(inputs = self.input_manager.get_inputs(player.uid), **kwargs)
+
+            inputs = self.input_manager.get_inputs(player.uid)
+
+            player.update(inputs = inputs, **kwargs)
+
+            if KeyType.SHOOT.name in inputs:
+                bullet = player.shoot(self.npcs)
+                if bullet is not None:
+                    self.player_bullets.append(bullet)
+
             self.input_manager.clear_inputs(player.uid)
 
 
@@ -53,6 +78,7 @@ class AbstractGame:
 
         for npc in self.npcs:
             npc.update(players = self.players, **kwargs)
+            self.try_npc_shoot(npc)
 
 
     def render_all(self):
@@ -65,6 +91,20 @@ class AbstractGame:
         for npc in self.npcs:
             npc.draw(self.screen)
 
+        for bullet in self.player_bullets:
+            bullet.draw(self.screen)
+
+        for bullet in self.npc_bullets:
+            bullet.draw(self.screen)
+
+    def update_bullets(self):
+        """Update bullets position"""
+        for bullet_list in [self.player_bullets, self.npc_bullets]:
+            for bullet in bullet_list[:]:
+                bullet.update()
+                if bullet.is_off_screen():
+                    bullet_list.remove(bullet)
+
 
     def run(self):
         """Running loop"""
@@ -74,6 +114,7 @@ class AbstractGame:
 
             self.update_players()
             self.update_npcs()
+            self.update_bullets()
 
             self.render_all()
             pygame.display.flip()
@@ -131,6 +172,7 @@ class CoopGame(AbstractGame):
         self.input_manager.add_keymap(self.PLAYER2, PLAYER_KEYMAPS["arrows"])
 
         self.npcs.append(NPC(400, 400))
+
 
     def handle_key_events(self):
         """Handles key presses"""

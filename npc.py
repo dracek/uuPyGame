@@ -1,10 +1,8 @@
 """NPC module"""
 import math
-
 import pygame
 
 from config import NPC_SPEED
-
 
 class NPC:
     """NPC common class"""
@@ -13,7 +11,6 @@ class NPC:
 
     def update(self, **kwargs):
         """Updates self position according to players"""
-
         nearest_player = self.find_closest_player(self, kwargs["players"].values())
 
 
@@ -25,6 +22,15 @@ class NPC:
             self.rect.y += NPC_SPEED
         elif self.rect.y > nearest_player.rect.y:
             self.rect.y -= NPC_SPEED
+
+    def get_shot_target(self, players):
+        return self.find_closest_player(self, players)
+
+   # def shoot(self, target):
+   #     bullet = Bullet(self.rect.centerx, self.rect.centery,
+   #                     target.rect.centerx, target.rect.centery,
+   #                     color=(255, 0, 0))
+   #     self.bullets.append(bullet)
 
     def draw(self, screen):
         """Draws itself"""

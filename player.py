@@ -4,6 +4,7 @@ import pygame
 
 from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
 from enums import KeyType, Facing
+from bullet import Bullet
 
 movement_keys = {KeyType.LEFT.name, KeyType.RIGHT.name, KeyType.UP.name, KeyType.DOWN.name}
 
@@ -18,6 +19,10 @@ class Player:
         self.speed = PLAYER_SPEED
         self.is_moving = False
         self.facing = Facing.RIGHT
+
+        self.shoot_cooldown = 250
+        self.last_shot_time = pygame.time.get_ticks()
+
 
     def set_coords(self, x, y):
         """Coords setter"""
@@ -48,11 +53,26 @@ class Player:
             self.rect.x += self.speed
             self.facing = Facing.RIGHT
 
-        # overflow corrections - todo možná udělat přes kolize!
+        # overflow corrections - todo možná udělat přes kolize s okrajem!
         self.rect.x = max(self.rect.x, 0)
         self.rect.y = max(self.rect.y, 0)
         self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
         self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
+
+
+    def shoot(self, npcs):
+        """Try to shoot, does not fire in cooldown"""
+
+        now = pygame.time.get_ticks()
+
+        if now - self.last_shot_time >= self.shoot_cooldown:
+
+            #if target_pos is None:# todo targetting here.
+            target_pos = (400, 300)
+
+            bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=self.color)
+            self.last_shot_time = now
+            return bullet
 
     def draw(self, screen):
         """Draws itself"""
