@@ -9,8 +9,6 @@ class NPC:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 20, 20)
 
-        self.health = 100
-        self.max_health = 100
 
     def update(self, **kwargs):
         """Updates self position according to players"""
