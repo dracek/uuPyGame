@@ -18,7 +18,7 @@ def main():
 
     # Set up window using fixed resolution from config.py
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Moje Střilečka")
+    pygame.display.set_caption("UNICORN ZOMBIES")
 
     # Load and scale background to match config resolution
     bg_path = os.path.join("assets", "sprites", "background", "heli.png")

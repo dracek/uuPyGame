@@ -1,4 +1,5 @@
 """UI module"""
+import os
 
 import pygame
 from decorators import log_decorator
@@ -14,7 +15,7 @@ def show_menu(screen):
                     "ESC: Ukončení"]
 
     while True:
-        screen.fill((0, 0, 128))
+        screen.fill((43, 28, 88))
         for i, option in enumerate(menu_options):
             text = font.render(option, True, (255, 255, 255))
             screen.blit(text, (50, 200 + i * 40))
@@ -39,25 +40,20 @@ def show_menu(screen):
 def show_splash(screen):
     """Init splash screen"""
 
-    font = pygame.font.Font(None, 36)
+    bg_path = os.path.join("assets", "sprites", "background", "intro.png")
+    background = pygame.image.load(bg_path).convert()
+    background = pygame.transform.scale(background, screen.get_size())
 
-    # todo timer, aby se po par sekundach samo ukoncilo
+    screen.blit(background, (0, 0))
+    pygame.display.flip()
+
     while True:
-        screen.fill((0, 0, 0))
-
-        text = font.render("Our fancy game name", True, (255, 0, 0))
-        screen.blit(text, (50, 200))
-
-        text = font.render("press escape to continue", True, (255, 255, 255))
-        screen.blit(text, (50, 300))
-
-        pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 return
 
 def show_end_message(screen, message):
