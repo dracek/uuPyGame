@@ -8,6 +8,7 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT, BULLET_SIZE, BULLET_SPEED
 class Bullet:
     def __init__(self, x, y, target_x, target_y,color=(0, 0, 0),shooter=None):
         self.rect = pygame.Rect(x, y, BULLET_SIZE, BULLET_SIZE)
+        self.rect.center = (x, y)
         angle = math.atan2(target_y - y, target_x - x)
         self.dx = math.cos(angle) * BULLET_SPEED
         self.dy = math.sin(angle) * BULLET_SPEED

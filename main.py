@@ -26,17 +26,17 @@ def main():
             game = SingleGame(screen=screen)
             result = game.run()
             if result == "win":
-                show_end_message(screen, "You win!")
+                show_end_message(screen, f"You win! Score: {game.score}")
             elif result == "lost":
-                show_end_message(screen, "You lost.")
+                show_end_message(screen, f"You lost.Score: {game.score}")
 
         if choice == GameType.COOP:
             game = CoopGame(screen=screen)
             result = game.run()
             if result == "win":
-                show_end_message(screen, "You win!")
+                show_end_message(screen, f"You win!Score: {game.score}")
             elif result == "lost":
-                show_end_message(screen, "You lost.")
+                show_end_message(screen, f"You lost.Score: {game.score}")
             else:
                 show_end_message(screen, "Game ended.")
 
