@@ -7,7 +7,7 @@ class Assets:
         self.player_frames = {}
         self.load_player_frames()
 
-        self.unicorn_bullet = self.load_unicorn_bullet()  # ✅ Preload unicorn bullet
+        self.unicorn_bullet = self.load_unicorn_bullet()  # Preload unicorn bullet
 
     def load_player_frames(self):
         sprite_path = os.path.join("assets", "sprites", "characters", "Player.png")
@@ -31,7 +31,7 @@ class Assets:
         try:
             image = pygame.image.load(path).convert_alpha()
             scaled = pygame.transform.scale(image, (32, 32))
-            print("[DEBUG] Unicorn bullet loaded:", scaled.get_size())
+            #print("[DEBUG] Unicorn bullet loaded:", scaled.get_size())
             return scaled
         except Exception as e:
             print(f"[ERROR] Could not load unicorn bullet: {e}")
