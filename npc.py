@@ -77,7 +77,7 @@ class NPC:
 
     def distance(self, rect1, rect2):
         """Helper function for distance computing"""
-        return math.hypot(rect1.x - rect2.x, rect1.y - rect2.y)
+        return math.hypot(rect1.centerx - rect2.centerx, rect1.centery - rect2.centery)
 
 
     def find_closest_player(self, npc, players):

@@ -46,15 +46,19 @@ class AbstractGame:
 
         self.game_result = None
 
-
     def spawn_random_npc(self):
-        npc_type = random.choices(
-            ["easy", "medium", "hard"],
-            weights=[70, 25, 5],
-            k=1
-        )[0]
-        x = random.randint(50, self.screen.get_width() - 50)
-        y = random.randint(50, self.screen.get_height() - 50)
+        npc_type = random.choices(["easy", "medium", "hard"], weights=[70, 25, 5])[0]
+
+        sw, sh = self.screen.get_width(), self.screen.get_height()
+        margin = 10
+
+        corners = [
+            (margin, margin),  # levý horní roh
+            (sw - margin, margin),  # pravý horní roh
+            (margin, sh - margin),  # levý dolní roh
+            (sw - margin, sh - margin),  # pravý dolní roh
+        ]
+        x, y = random.choice(corners)
         self.npcs.append(NPC(x, y, npc_type=npc_type))
 
 
@@ -249,12 +253,12 @@ class SingleGame(AbstractGame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        center_x = self.screen.get_width() // 2
+        center_y = self.screen.get_height() // 2
 
-        pl1 = Player(self.PLAYER1)       # todo some better init
-        pl1.set_coords(20,20)
+        pl1 = Player(self.PLAYER1)
+        pl1.set_coords(center_x - 30, center_y)
         self.players[self.PLAYER1] = pl1
-
-
         self.input_manager.add_keymap(self.PLAYER1, PLAYER_KEYMAPS["wasd"])
 
 
@@ -286,23 +290,19 @@ class CoopGame(AbstractGame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        center_x = self.screen.get_width() // 2
+        center_y = self.screen.get_height() // 2
 
         pl1 = Player(self.PLAYER1)
-        pl1.set_coords(20,20)
+        pl1.set_coords(center_x - 30, center_y)
         self.players[self.PLAYER1] = pl1
-
-
         self.input_manager.add_keymap(self.PLAYER1, PLAYER_KEYMAPS["wasd"])
 
-
-        pl2 = Player(self.PLAYER2)  # experimental player 2
-        pl2.set_coords(100, 20)
-        pl2.color = (0,0,255)
+        pl2 = Player(self.PLAYER2)
+        pl2.set_coords(center_x + 30, center_y)
+        pl2.color = (0, 0, 255)
         self.players[self.PLAYER2] = pl2
-
-
         self.input_manager.add_keymap(self.PLAYER2, PLAYER_KEYMAPS["arrows"])
-
 
         self.npcs.append(NPC(400, 400))
 
