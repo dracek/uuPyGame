@@ -2,7 +2,7 @@
 import math
 import pygame
 
-from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
+from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED
 from enums import KeyType, Facing
 from bullet import Bullet
 
@@ -21,11 +21,12 @@ class Player:
         self.speed = PLAYER_SPEED
         self.is_moving = False
         self.facing = Facing.DOWN
-        self.health = 1000
-        self.max_health = 1000
+        self.health = 100
+        self.max_health = 100
         self.color = (0, 255, 0)
 
         self.shoot_cooldown = 250
+        self.damage = 10  # damage dealt per shot
         self.last_shot_time = pygame.time.get_ticks()
 
         self.frame_timer = 0
@@ -45,6 +46,8 @@ class Player:
 
     def update(self, **kwargs):
         inp = kwargs["inputs"]
+        screen = kwargs.get("screen")
+
         self.is_moving = any(key in inp for key in movement_keys)
 
         if KeyType.UP.name in inp:
@@ -61,8 +64,10 @@ class Player:
             self.rect.x += self.speed
             self.facing = Facing.RIGHT
 
-        self.rect.x = max(0, min(self.rect.x, SCREEN_WIDTH - self.rect.width))
-        self.rect.y = max(0, min(self.rect.y, SCREEN_HEIGHT - self.rect.height))
+        if screen:
+            sw, sh = screen.get_width(), screen.get_height()
+            self.rect.x = max(0, min(self.rect.x, sw - self.rect.width))
+            self.rect.y = max(0, min(self.rect.y, sh - self.rect.height))
 
         self.animate()
 
@@ -77,6 +82,9 @@ class Player:
                 frame = "shoot1" if (now // 150) % 2 == 0 else "shoot2"
                 key = (direction, frame)
                 self.image = self.frames.get(key, self.frames.get(("down", "walk1"), [None]))[0]
+                if self.image:
+                    center = self.rect.center
+                    self.rect = self.image.get_rect(center=center)
                 return
 
         if self.is_moving:
@@ -88,6 +96,10 @@ class Player:
 
         key = (direction, action)
         self.image = self.frames.get(key, self.frames.get(("down", "walk1"), [None]))[0]
+
+        if self.image:
+            center = self.rect.center
+            self.rect = self.image.get_rect(center=center)
 
     def distance(self, rect1, rect2):
         return math.hypot(rect1.centerx - rect2.centerx, rect1.centery - rect2.centery)
@@ -108,7 +120,7 @@ class Player:
             target = self.find_closest_npc(npcs)
             if target is None:
                 return None
-            target_pos = (target.rect.centerx, target.rect.centery)
+            target_pos = (target.rect.centerx, target.rect.centery - 8)
             bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=self.color)
 
             self.last_shot_time = now
