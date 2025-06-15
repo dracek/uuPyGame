@@ -1,59 +1,51 @@
-"""Player module"""
+"""Player module using directional sprite animations"""
 import math
 import pygame
-
 
 from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
 from enums import KeyType, Facing
 from bullet import Bullet
 
-
 movement_keys = {KeyType.LEFT.name, KeyType.RIGHT.name, KeyType.UP.name, KeyType.DOWN.name}
 
 
 class Player:
-    """Player class init"""
-    def __init__(self, uid):
-
-
+    def __init__(self, uid, assets, pos=(0, 0)):
         self.uid = uid
-        self.rect = pygame.Rect(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT)
-        self.color = (0, 255, 0)
+        self.assets = assets
+        self.frames = self.assets.player_frames  # Dict: (direction, action) -> [Surface]
+        self.image = None
+        self.rect = pygame.Rect(pos[0], pos[1], PLAYER_WIDTH, PLAYER_HEIGHT)
+
         self.name = "Player1"
         self.speed = PLAYER_SPEED
         self.is_moving = False
-        self.facing = Facing.RIGHT
-        self.health = 100
-        self.max_health = 100
-
-
-
+        self.facing = Facing.DOWN
+        self.health = 1000
+        self.max_health = 1000
+        self.color = (0, 255, 0)
 
         self.shoot_cooldown = 250
         self.last_shot_time = pygame.time.get_ticks()
 
+        self.frame_timer = 0
+        self.frame_index = 0
+        self.frame_delay = 150  # ms
+        self.current_action = "walk1"
 
-
+        self.shoot_anim_time = 300  # ms to show shoot frame
+        self.last_shoot_anim = 0
+        self.shooting = False  # Tracks if we are currently animating a shot
 
     def set_coords(self, x, y):
-        """Coords setter"""
-        self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
-
+        self.rect.topleft = (x, y)
 
     def set_name(self, name):
-        """Name setter"""
         self.name = name
 
-
     def update(self, **kwargs):
-        """Update self position from move intention"""
-
-
         inp = kwargs["inputs"]
-
-
         self.is_moving = any(key in inp for key in movement_keys)
-
 
         if KeyType.UP.name in inp:
             self.rect.y -= self.speed
@@ -62,7 +54,6 @@ class Player:
             self.rect.y += self.speed
             self.facing = Facing.DOWN
 
-
         if KeyType.LEFT.name in inp:
             self.rect.x -= self.speed
             self.facing = Facing.LEFT
@@ -70,65 +61,72 @@ class Player:
             self.rect.x += self.speed
             self.facing = Facing.RIGHT
 
+        self.rect.x = max(0, min(self.rect.x, SCREEN_WIDTH - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, SCREEN_HEIGHT - self.rect.height))
 
-        # overflow corrections - todo možná udělat přes kolize s okrajem!
-        self.rect.x = max(self.rect.x, 0)
-        self.rect.y = max(self.rect.y, 0)
-        self.rect.x = min(self.rect.x, SCREEN_WIDTH - PLAYER_WIDTH)
-        self.rect.y = min(self.rect.y, SCREEN_HEIGHT - PLAYER_HEIGHT)
+        self.animate()
 
+    def animate(self):
+        now = pygame.time.get_ticks()
+        direction = self.facing.name.lower()
+
+        if self.shooting:
+            if now - self.last_shoot_anim > self.shoot_anim_time:
+                self.shooting = False
+            else:
+                frame = "shoot1" if (now // 150) % 2 == 0 else "shoot2"
+                key = (direction, frame)
+                self.image = self.frames.get(key, self.frames.get(("down", "walk1"), [None]))[0]
+                return
+
+        if self.is_moving:
+            walk_cycle = ["walk1", "walk2", "walk3"]
+            index = (now // self.frame_delay) % len(walk_cycle)
+            action = walk_cycle[index]
+        else:
+            action = "walk1"
+
+        key = (direction, action)
+        self.image = self.frames.get(key, self.frames.get(("down", "walk1"), [None]))[0]
 
     def distance(self, rect1, rect2):
-        """Helper function for distance computing"""
         return math.hypot(rect1.centerx - rect2.centerx, rect1.centery - rect2.centery)
-
 
     def find_closest_npc(self, npcs):
         closest = None
         min_dist = float('inf')
-
-
         for npc in npcs:
             dist = self.distance(self.rect, npc.rect)
             if dist < min_dist:
                 min_dist = dist
                 closest = npc
-
-
         return closest
 
-
-
-
     def shoot(self, npcs):
-        """Try to shoot, does not fire in cooldown"""
-
-
         now = pygame.time.get_ticks()
         if now - self.last_shot_time >= self.shoot_cooldown:
             target = self.find_closest_npc(npcs)
             if target is None:
                 return None
-
-
             target_pos = (target.rect.centerx, target.rect.centery)
             bullet = Bullet(self.rect.centerx, self.rect.centery, *target_pos, color=self.color)
-            self.last_shot_time = now
-            return bullet
 
+            self.last_shot_time = now
+            self.shooting = True
+            self.last_shoot_anim = now
+
+            return bullet
 
     def draw_lifebar(self, screen):
         bar_width = self.rect.width
-        bar_heigth = 5
+        bar_height = 5
         fill = (self.health / self.max_health) * bar_width
-
-
-        pygame.draw.rect(screen, (255, 0, 0), (self.rect.x, self.rect.y - 10, bar_width, bar_heigth))
-        pygame.draw.rect(screen, (0, 255, 0), (self.rect.x, self.rect.y - 10, fill, bar_heigth))
-
+        pygame.draw.rect(screen, (255, 0, 0), (self.rect.x, self.rect.y - 10, bar_width, bar_height))
+        pygame.draw.rect(screen, (0, 255, 0), (self.rect.x, self.rect.y - 10, fill, bar_height))
 
     def draw(self, screen):
-        """Draws itself"""
-        pygame.draw.rect(screen, self.color, self.rect)
+        if self.image:
+            screen.blit(self.image, self.rect)
+        else:
+            pygame.draw.rect(screen, self.color, self.rect)
         self.draw_lifebar(screen)
-
