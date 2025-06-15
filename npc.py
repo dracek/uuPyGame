@@ -29,15 +29,15 @@ class NPC:
         self.damage = npc_config["damage"]
         self.color = npc_config["color"]
 
-
-
-
     def update(self, **kwargs):
         """Updates self position according to players"""
-        nearest_player = self.find_closest_player(self, kwargs["players"].values())
+        all_players = kwargs["players"].values()
+        living_players = [p for p in all_players if p.health > 0]
 
+        if not living_players:
+            return
 
-
+        nearest_player = self.find_closest_player(self, living_players)
 
         if self.rect.x < nearest_player.rect.x:
             self.rect.x += NPC_SPEED
@@ -48,9 +48,11 @@ class NPC:
         elif self.rect.y > nearest_player.rect.y:
             self.rect.y -= NPC_SPEED
 
-
     def get_shot_target(self, players):
-        return self.find_closest_player(self, players)
+        living_players = [p for p in players if p.health > 0]
+        if not living_players:
+            return None
+        return self.find_closest_player(self, living_players)
 
 
     def draw_lifebar(self, screen):
