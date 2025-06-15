@@ -133,7 +133,7 @@ class Player:
         bar_width = self.rect.width
         bar_height = 5
         fill = (self.health / self.max_health) * bar_width
-        offset = 35
+        offset = 5
         pygame.draw.rect(screen, (255, 0, 0), (self.rect.x + offset, self.rect.y - 10, bar_width, bar_height))
         pygame.draw.rect(screen, (0, 255, 0), (self.rect.x + offset, self.rect.y - 10, fill, bar_height))
 
