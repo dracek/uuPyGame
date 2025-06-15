@@ -4,7 +4,7 @@ import pygame
 
 from enums import GameType
 from game import SingleGame, CoopGame
-from ui import show_menu, show_splash
+from ui import show_menu, show_splash, show_end_message
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 pygame.init()
@@ -24,11 +24,21 @@ def main():
 
         if choice == GameType.SINGLE:
             game = SingleGame(screen=screen)
-            game.run()
+            result = game.run()
+            if result == "win":
+                show_end_message(screen, "You win!")
+            elif result == "lost":
+                show_end_message(screen, "You lost.")
 
         if choice == GameType.COOP:
             game = CoopGame(screen=screen)
-            game.run()
+            result = game.run()
+            if result == "win":
+                show_end_message(screen, "You win!")
+            elif result == "lost":
+                show_end_message(screen, "You lost.")
+            else:
+                show_end_message(screen, "Game ended.")
 
         elif choice == "quit":
             break

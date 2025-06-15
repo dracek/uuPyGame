@@ -10,6 +10,7 @@ from enums import KeyType
 from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
+from ui import show_end_message
 
 
 from config import GAME_FPS
@@ -44,6 +45,8 @@ class AbstractGame:
         self.last_spawn_time = pygame.time.get_ticks()
         self.spawn_interval_range = (3000, 5000)
 
+        self.game_result = None
+
 
     def spawn_random_npc(self):
         npc_type = random.choices(
@@ -76,7 +79,7 @@ class AbstractGame:
                     npc.rect.centerx, npc.rect.centery,
                     target.rect.centerx, target.rect.centery,
                     color=(255, 0, 0),
-                    shooter=npc  # tady přidáš referenci na střílejícího NPC
+                    shooter=npc
                 )
                 self.npc_bullets.append(bullet)
                 self.npc_last_shot_times[npc_id] = now
@@ -193,21 +196,11 @@ class AbstractGame:
     def check_game_end(self):
         alive_players = [p for p in self.players.values() if p.health > 0]
         if not alive_players:
-            self.running = False
-            if self.score >= 200:
-                self.display_end_message("You win!")
+            if self.score >= 100:
+                self.game_result = "win"
             else:
-                self.display_end_message("You lost.")
-
-    def display_end_message(self, message):
-        font = pygame.font.SysFont(None, 60)
-        text = font.render(message, True, (255, 255, 255))
-        rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-        self.screen.fill((0, 0, 0))
-        self.screen.blit(text, rect)
-        pygame.display.flip()
-        pygame.time.wait(3000)
-
+                self.game_result = "lost"
+            self.running = False
 
     def run(self):
         """Running loop"""
@@ -233,6 +226,7 @@ class AbstractGame:
 
 
         print("Closing game ....")
+        return self.game_result
 
 
 
