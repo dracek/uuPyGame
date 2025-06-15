@@ -3,7 +3,6 @@
 import pygame
 import random
 import os
-
 from bullet import Bullet
 from enums import KeyType
 from inputs import InputManager, PLAYER_KEYMAPS
@@ -19,12 +18,17 @@ ENEMY_SPAWN_ORDER = [
 ]
 
 class AbstractGame:
-    """Abstract game ancestor"""
-
     def __init__(self, **kwargs):
+        self.screen = kwargs["screen"]  # ✅ MUST be set before using
         self.input_manager = InputManager()
 
-        self.screen = kwargs["screen"]
+        # ✅ Load and scale background
+        bg_path = os.path.join("assets", "sprites", "background", "heli.png")
+        original_bg = pygame.image.load(bg_path).convert()
+        screen_width = self.screen.get_width()
+        screen_height = self.screen.get_height()
+        self.background = pygame.transform.scale(original_bg, (screen_width, screen_height))
+
         self.clock = pygame.time.Clock()
         self.running = True
         self.tick = 1 * GAME_FPS
@@ -40,12 +44,7 @@ class AbstractGame:
         self.score = 0
         self.last_spawn_time = pygame.time.get_ticks()
         self.spawn_interval_range = (3000, 5000)
-
         self.game_result = None
-
-        # Load background image
-        bg_path = os.path.join("assets", "sprites", "background", "heli.png")
-        self.background = pygame.image.load(bg_path).convert()
 
     def spawn_random_npc(self):
         sw, sh = self.screen.get_width(), self.screen.get_height()
@@ -204,6 +203,7 @@ class AbstractGame:
         print("Closing game ....")
         return self.game_result
 
+
 class SingleGame(AbstractGame):
     PLAYER1 = "Player1"
 
@@ -226,6 +226,7 @@ class SingleGame(AbstractGame):
         for key in PLAYER_KEYMAPS["wasd"].keys():
             if keys[key]:
                 self.input_manager.add_input(self.PLAYER1, key)
+
 
 class CoopGame(AbstractGame):
     PLAYER1 = "Player1"
