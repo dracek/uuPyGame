@@ -2,7 +2,7 @@
 import math
 import pygame
 
-from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED
+from config import PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
 from enums import KeyType, Facing
 from bullet import Bullet
 
@@ -46,7 +46,6 @@ class Player:
 
     def update(self, **kwargs):
         inp = kwargs["inputs"]
-        screen = kwargs.get("screen")
 
         self.is_moving = any(key in inp for key in movement_keys)
 
@@ -64,10 +63,8 @@ class Player:
             self.rect.x += self.speed
             self.facing = Facing.RIGHT
 
-        if screen:
-            sw, sh = screen.get_width(), screen.get_height()
-            self.rect.x = max(0, min(self.rect.x, sw - self.rect.width))
-            self.rect.y = max(0, min(self.rect.y, sh - self.rect.height))
+        self.rect.x = max(0, min(self.rect.x, SCREEN_WIDTH - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, SCREEN_HEIGHT - self.rect.height))
 
         self.animate()
 
