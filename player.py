@@ -17,7 +17,7 @@ class Player:
         self.image = None
         self.rect = pygame.Rect(pos[0], pos[1], PLAYER_WIDTH, PLAYER_HEIGHT)
 
-        self.name = "Player1"
+        self.name = uid
         self.speed = PLAYER_SPEED
         self.is_moving = False
         self.facing = Facing.DOWN
@@ -133,8 +133,14 @@ class Player:
         bar_width = self.rect.width
         bar_height = 5
         fill = (self.health / self.max_health) * bar_width
-        pygame.draw.rect(screen, (255, 0, 0), (self.rect.x, self.rect.y - 10, bar_width, bar_height))
-        pygame.draw.rect(screen, (0, 255, 0), (self.rect.x, self.rect.y - 10, fill, bar_height))
+        offset = 35
+        pygame.draw.rect(screen, (255, 0, 0), (self.rect.x + offset, self.rect.y - 10, bar_width, bar_height))
+        pygame.draw.rect(screen, (0, 255, 0), (self.rect.x + offset, self.rect.y - 10, fill, bar_height))
+
+        font = pygame.font.SysFont(None, 24)
+        name_surface = font.render(self.name, True, self.color)
+        name_rect = name_surface.get_rect(center=(self.rect.centerx + offset, self.rect.top - 20))
+        screen.blit(name_surface, name_rect)
 
     def draw(self, screen):
         if self.image:
