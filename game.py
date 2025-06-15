@@ -10,7 +10,6 @@ from enums import KeyType
 from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
 from npc import NPC
-from ui import show_end_message
 
 
 from config import GAME_FPS
@@ -67,22 +66,28 @@ class AbstractGame:
             # Nastav nový random interval pro další spawn
             self.next_spawn_interval = random.randint(*self.spawn_interval_range)
 
-
     def try_npc_shoot(self, npc):
         now = pygame.time.get_ticks()
         npc_id = id(npc)
-        last_shot = self.npc_last_shot_times.get(npc_id, 0)
-        if now - last_shot >= self.npc_shoot_cooldown:
-            target = npc.get_shot_target(self.players.values())
-            if target:
-                bullet = Bullet(
-                    npc.rect.centerx, npc.rect.centery,
-                    target.rect.centerx, target.rect.centery,
-                    color=(255, 0, 0),
-                    shooter=npc
-                )
-                self.npc_bullets.append(bullet)
-                self.npc_last_shot_times[npc_id] = now
+
+        if now - self.npc_last_shot_times.get(npc_id, 0) < self.npc_shoot_cooldown:
+            return
+
+        target = npc.get_shot_target(
+            [p for p in self.players.values() if p.health > 0]
+        )
+
+        if not target:
+            return
+
+        bullet = Bullet(
+            npc.rect.centerx, npc.rect.centery,
+            target.rect.centerx, target.rect.centery,
+            color=(255, 0, 0),
+            shooter=npc
+        )
+        self.npc_bullets.append(bullet)
+        self.npc_last_shot_times[npc_id] = now
 
 
     def check_bullet_collisions(self):
@@ -127,13 +132,11 @@ class AbstractGame:
     def update_players(self,  **kwargs):
         """Handles players updates"""
 
-
         for player in self.players.values():
-
+            if player.health <= 0:
+                continue
 
             inputs = self.input_manager.get_inputs(player.uid)
-
-
             player.update(inputs = inputs, **kwargs)
 
 
@@ -145,16 +148,21 @@ class AbstractGame:
 
             self.input_manager.clear_inputs(player.uid)
 
-
-
-
-    def update_npcs(self,  **kwargs):
+    def update_npcs(self, **kwargs):
         """Handles npcs updates"""
 
-
-        for npc in self.npcs:
-            npc.update(players = self.players, **kwargs)
+        for npc in self.npcs[:]:
+            npc.update(players=self.players, **kwargs)
             self.try_npc_shoot(npc)
+
+            for player in self.players.values():
+                if player.health <= 0:
+                    continue
+
+                if npc.rect.colliderect(player.rect):
+                    player.health -= npc.damage * 2
+                    self.npcs.remove(npc)
+                    break
 
 
 
@@ -163,9 +171,9 @@ class AbstractGame:
         """Draws itself"""
         self.screen.fill((0, 0, 0))
 
-
         for player in self.players.values():
-            player.draw(self.screen)
+            if player.health > 0:
+                player.draw(self.screen)
 
 
         for npc in self.npcs:
@@ -196,7 +204,7 @@ class AbstractGame:
     def check_game_end(self):
         alive_players = [p for p in self.players.values() if p.health > 0]
         if not alive_players:
-            if self.score >= 100:
+            if self.score >= 200:
                 self.game_result = "win"
             else:
                 self.game_result = "lost"
