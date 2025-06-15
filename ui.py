@@ -10,28 +10,28 @@ from enums import GameType
 def show_menu(screen):
     """Main game menu"""
     font = pygame.font.Font(None, 36)
-    menu_options = ["1: Single player",
-                    "2: Cooperative",
+    menu_options = ["1: Single player game",
+                    "2: Cooperative game",
                     "ESC: Ukončení"]
 
-    while True:
-        screen.fill((43, 28, 88))
-        for i, option in enumerate(menu_options):
-            text = font.render(option, True, (255, 255, 255))
-            screen.blit(text, (50, 200 + i * 40))
+    screen.fill((43, 28, 88))
+    for i, option in enumerate(menu_options):
+        text = font.render(option, True, (255, 255, 255))
+        screen.blit(text, (270, 320 + i * 40))
 
-        pygame.display.flip()
+    pygame.display.flip()
+
+    while True:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "quit"
+
             if event.type == pygame.KEYDOWN:
 
-                print("Key pressed:", event.key)
-
-                if event.key == 49: #pygame.K_1:
+                if event.key == 49:
                     return GameType.SINGLE
-                if event.key == 50: #pygame.K_2:
+                if event.key == 50:
                     return GameType.COOP
 
                 if event.key == pygame.K_ESCAPE:

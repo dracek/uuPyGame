@@ -20,19 +20,20 @@ class Bullet:
         self.rect = pygame.Rect(0, 0, BULLET_SIZE, BULLET_SIZE)
         self.rect.center = (x, y)
 
-        # ✅ Apply rotation if image provided
+        # Apply rotation if image provided
         if self.original_image:
             try:
                 rotated = pygame.transform.rotate(self.original_image, -self.angle_deg + 180)
                 self.image = rotated
                 self.image_rect = self.image.get_rect(center=self.rect.center)
-                print("[Bullet] Rotated image created successfully")
+                #print("[Bullet] Rotated image created successfully")
             except Exception as e:
                 print("[Bullet ERROR] Rotation failed:", e)
                 self.image = None
                 self.image_rect = None
         else:
-            print("[Bullet] No image provided, using color:", self.color)
+            pass
+            #print("[Bullet] No image provided, using color:", self.color)
 
     def update(self):
         self.rect.x += self.dx

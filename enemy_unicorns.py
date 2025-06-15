@@ -43,7 +43,7 @@ class UnicornEnemy(Enemy):
         # Load bullet image
         self.assets = Assets()
         self.bullet_image = self.assets.unicorn_bullet
-        print("[DEBUG] Bullet image set:", type(self.bullet_image))
+        #print("[DEBUG] Bullet image set:", type(self.bullet_image))
 
         self.animate()
 
