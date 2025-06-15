@@ -35,3 +35,27 @@ def show_menu(screen):
 
                 if event.key == pygame.K_ESCAPE:
                     return "quit"
+
+def show_splash(screen):
+    """Init splash screen"""
+
+    font = pygame.font.Font(None, 36)
+
+    # todo timer, aby se po par sekundach samo ukoncilo
+    while True:
+        screen.fill((0, 0, 0))
+
+        text = font.render("Our fancy game name", True, (255, 0, 0))
+        screen.blit(text, (50, 200))
+
+        text = font.render("press escape to continue", True, (255, 255, 255))
+        screen.blit(text, (50, 300))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return
