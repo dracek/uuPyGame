@@ -13,14 +13,12 @@ def main():
     """Main function of this game"""
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Moje Střilečka")
+    pygame.display.set_caption("UNICORN ZOMBIES")
 
     show_splash(screen)
 
     while True:
         choice = show_menu(screen)
-
-        #print("Choice", choice)
 
         if choice == GameType.SINGLE:
             game = SingleGame(screen=screen)
