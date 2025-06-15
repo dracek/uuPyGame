@@ -59,3 +59,12 @@ def show_splash(screen):
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return
+
+def show_end_message(screen, message):
+    font = pygame.font.SysFont(None, 60)
+    text = font.render(message, True, (255, 255, 255))
+    rect = text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+    screen.fill((0, 0, 0))
+    screen.blit(text, rect)
+    pygame.display.flip()
+    pygame.time.wait(3000)
