@@ -1,7 +1,10 @@
 """Main module"""
 
-import pygame
+import sys
 import os
+sys.path.append(os.path.dirname(__file__))  # ✅ Ensures local imports work
+
+import pygame
 
 from enums import GameType
 from game import SingleGame, CoopGame

@@ -86,14 +86,23 @@ class Enemy:
         fill = (self.health / self.max_health) * bar_width
         pygame.draw.rect(screen, (255, 0, 0), (self.rect.x, self.rect.y - 10, bar_width, 5))
         pygame.draw.rect(screen, (0, 255, 0), (self.rect.x, self.rect.y - 10, fill, 5))
-
+    
     def draw(self, screen):
-        """Draws enemy"""
+        """Draws enemy with visible border"""
         if self.image:
-            screen.blit(self.image, self.rect.topleft)
+            # Create a rect centered on current position, based on image size
+            image_rect = self.image.get_rect(center=self.rect.center)
+            
+            # Draw the image
+            screen.blit(self.image, image_rect)
+
         else:
+            # If no image, draw fallback red rectangle + border
             pygame.draw.rect(screen, (255, 0, 0), self.rect)
+            pygame.draw.rect(screen, (0, 0, 255), self.rect, 1)
+
         self.draw_lifebar(screen)
+
 
     def distance(self, rect1, rect2):
         return math.hypot(rect1.centerx - rect2.centerx, rect1.centery - rect2.centery)

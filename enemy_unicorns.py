@@ -2,14 +2,15 @@ import os
 import pygame
 from enemy import Enemy
 from spritesheet import SpriteSheet
+from assets import Assets  # ✅ Import to access unicorn bullet
 
 class UnicornEnemy(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y)
 
         # Custom stats
-        self.health = 60
-        self.max_health = 60
+        self.health = 10
+        self.max_health = 10
         self.damage = 8
         self.speed = 1.5
         self.score = 15
@@ -21,7 +22,12 @@ class UnicornEnemy(Enemy):
         self.sprite_scale = 0.3
         self.frame_width = 32
         self.frame_height = 32
-        self.rect = pygame.Rect(x, y, int(self.frame_width * self.sprite_scale), int(self.frame_height * self.sprite_scale))
+
+        # Initial rect (will be updated after first frame)
+        scaled_w = int(self.frame_width * self.sprite_scale * 1.2)
+        scaled_h = int(self.frame_height * self.sprite_scale * 1.2)
+        self.rect = pygame.Rect(0, 0, scaled_w, scaled_h)
+        self.rect.center = (x, y)
 
         # Load animations
         self.animations = self.load_animations()
@@ -34,7 +40,12 @@ class UnicornEnemy(Enemy):
             "last_update": pygame.time.get_ticks()
         }
 
-        self.animate()  # Ensure self.image is initialized
+        # Load bullet image
+        self.assets = Assets()
+        self.bullet_image = self.assets.unicorn_bullet
+        print("[DEBUG] Bullet image set:", type(self.bullet_image))
+
+        self.animate()
 
     def load_animations(self):
         animations = {}
@@ -49,13 +60,12 @@ class UnicornEnemy(Enemy):
             for col, action in enumerate(action_order):
                 key = (direction, action)
                 try:
-                    animations[key] = [grid[row][col]]  # ✅ grab the correct frame
+                    animations[key] = [grid[row][col]]
                 except IndexError:
                     print(f"[WARN] Missing frame at row {row}, col {col} for key {key}")
                     animations[key] = []
 
         return animations
-
 
     def update(self, **kwargs):
         players = kwargs["players"]
@@ -93,11 +103,15 @@ class UnicornEnemy(Enemy):
             state["frame_index"] = (state["frame_index"] + 1) % len(frames)
             state["last_update"] = now
 
-        self.image = frames[state["frame_index"]]
+        if frames:
+            self.image = frames[state["frame_index"]]
+            # ✅ Update rect to match image frame
+            self.rect = self.image.get_rect(center=self.rect.center)
 
     def draw(self, screen):
         if not isinstance(self.image, pygame.Surface):
             print("[ERROR] self.image is not a Surface:", type(self.image))
             return
+
         screen.blit(self.image, self.rect.topleft)
         self.draw_lifebar(screen)

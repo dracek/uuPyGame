@@ -7,7 +7,7 @@ from bullet import Bullet
 from enums import KeyType
 from inputs import InputManager, PLAYER_KEYMAPS
 from player import Player
-from enemy_unicorn import UnicornEnemy
+from enemy_unicorns import UnicornEnemy
 from assets import Assets
 from config import GAME_FPS
 
@@ -81,12 +81,16 @@ class AbstractGame:
         if not target:
             return
 
+        bullet_image = getattr(npc, "bullet_image", None)
         bullet = Bullet(
             npc.rect.centerx, npc.rect.centery,
             target.rect.centerx, target.rect.centery,
-            color=(255, 0, 0),
-            shooter=npc
+            shooter=npc,
+            image=bullet_image if bullet_image else None,
+            color=(255, 0, 0) if not bullet_image else (0, 0, 0)  # backup only
         )
+
+
         self.npc_bullets.append(bullet)
         self.npc_last_shot_times[npc_id] = now
 
@@ -104,7 +108,7 @@ class AbstractGame:
         for bullet in self.player_bullets[:]:
             for npc in self.npcs[:]:
                 if bullet.rect.colliderect(npc.rect):
-                    npc.health -= 10
+                    npc.health -= player.damage
                     if npc.health <= 0:
                         self.npcs.remove(npc)
                         self.score += npc.score
